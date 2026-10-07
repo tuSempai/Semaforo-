@@ -65,7 +65,6 @@ static void MX_USART2_UART_Init(void);
   */
 int main(void)
 {
-
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -91,12 +90,52 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  /* Asegurar que todos los relés inicien APAGADOS (SET = 3.3V) */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET); // Verde apagado
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET); // Flecha apagada
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_SET); // Amarillo apagado
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET); // Rojo apagado
+  HAL_Delay(1000);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    /* --- ESTADO 1: VERDE SIGA + FLECHA VERDE (4 segundos) --- */
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET); // Enciende Verde
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET); // Enciende Flecha
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_SET);   // Apaga Amarillo
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);   // Apaga Rojo
+    HAL_Delay(4000);
+
+    /* --- ESTADO 2: SOLO VERDE SIGA (3 segundos) --- */
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);   // Apaga Flecha
+    HAL_Delay(3000);
+
+    /* --- ESTADO 3: PARPADEO DE VERDE SIGA (3 veces) --- */
+    for (int i = 0; i < 3; i++)
+    {
+      HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);   // Apaga Verde
+      HAL_Delay(350);
+      HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET); // Enciende Verde
+      HAL_Delay(350);
+    }
+
+    /* --- ESTADO 4: AMARILLO (2 segundos) --- */
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);   // Apaga Verde
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_RESET); // Enciende Amarillo
+    HAL_Delay(2000);
+
+    /* --- ESTADO 5: ROJO (5 segundos) --- */
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_SET);   // Apaga Amarillo
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // Enciende Rojo
+    HAL_Delay(5000);
+
+    /* Apaga Rojo antes de reiniciar la secuencia */
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -202,10 +241,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, Luz_Verde_Pin|Flecha_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, LD2_Pin|Luz_Naranja_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, Luz_Verde_Pin|Flecha_Pin|Luz_Amarilla_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(Luz_Roja_GPIO_Port, Luz_Roja_Pin, GPIO_PIN_RESET);
@@ -216,15 +252,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Luz_Verde_Pin Flecha_Pin */
-  GPIO_InitStruct.Pin = Luz_Verde_Pin|Flecha_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : LD2_Pin Luz_Naranja_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin|Luz_Naranja_Pin;
+  /*Configure GPIO pins : Luz_Verde_Pin Flecha_Pin Luz_Amarilla_Pin */
+  GPIO_InitStruct.Pin = Luz_Verde_Pin|Flecha_Pin|Luz_Amarilla_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
